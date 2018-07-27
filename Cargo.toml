@@ -1,0 +1,38 @@
+[package]
+name = "ryazo"
+version = "0.1.0"
+authors = ["ota42y <ota42y@gmail.com>"]
+
+[dependencies.iron]
+version = "*"
+
+[dependencies.params]
+version = "*"
+
+[dependencies.router]
+version = "*"
+
+[dependencies.multipart]
+version = "0.15.0"
+
+[dependencies.env_logger]
+version = "*"
+
+[dependencies.md5]
+version = "*"
+
+[dependencies.staticfile]
+version = "*"
+
+[dependencies.mount]
+version = "*"
+
+[dependencies.diesel]
+version = "1.0.0"
+features = ["sqlite", "chrono"]
+
+[dependencies.dotenv]
+version = "0.9.0"
+
+[dependencies.chrono]
+version = "*"

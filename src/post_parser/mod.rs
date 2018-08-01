@@ -1,11 +1,11 @@
 extern crate md5;
 
+use std::io::Read;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::time::{SystemTime, UNIX_EPOCH};
-use std::io::Read;
 
-use multipart::server::Multipart;
 use multipart::server::Entries;
+use multipart::server::Multipart;
 
 pub struct UploadRequest {
     pub id: String,
@@ -14,7 +14,11 @@ pub struct UploadRequest {
 }
 
 fn parse_data(entries: Entries) -> UploadRequest {
-    let r =  UploadRequest{ id: String::new(), buf: vec![], new_id: false };
+    let r = UploadRequest {
+        id: String::new(),
+        buf: vec![],
+        new_id: false,
+    };
     let mut req = r;
     {
         for (name, entries) in &entries.fields {
@@ -65,7 +69,11 @@ pub fn parse_request(remote_addr: IpAddr, entries: Entries) -> UploadRequest {
 #[test]
 fn test_new_id() {
     let localhost_v4 = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
-    let mut r =  UploadRequest{ id: String::new(), buf: vec![], new_id: false };
+    let mut r = UploadRequest {
+        id: String::new(),
+        buf: vec![],
+        new_id: false,
+    };
 
     assert_eq!(r.id, String::new());
 

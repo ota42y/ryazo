@@ -1,11 +1,11 @@
 extern crate md5;
 
+use std::error::Error;
 use std::io::Read;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::net::IpAddr;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use multipart::server::Entries;
-use multipart::server::Multipart;
 
 pub struct UploadRequest {
     pub id: String,
@@ -13,7 +13,7 @@ pub struct UploadRequest {
     pub new_id: bool,
 }
 
-fn parse_data(entries: Entries) -> UploadRequest {
+fn parse_data(entries: Entries) -> Result<UploadRequest, Box<Error>> {
     let r = UploadRequest {
         id: String::new(),
         buf: vec![],
@@ -24,28 +24,26 @@ fn parse_data(entries: Entries) -> UploadRequest {
         for (name, entries) in &entries.fields {
             let key_name = name.as_str();
             if key_name == "imagedata" {
-                for (idx, field) in entries.iter().enumerate() {
+                for (_idx, field) in entries.iter().enumerate() {
                     let headers = &field.headers;
                     if headers.name.as_str() == "imagedata" {
                         let mut data = field.data.readable().unwrap();
-                        data.read_to_end(&mut req.buf);
+                        data.read_to_end(&mut req.buf)?;
                     }
                 }
             }
             if key_name == "id" {
-                for (idx, field) in entries.iter().enumerate() {
+                for (_idx, field) in entries.iter().enumerate() {
                     let headers = &field.headers;
                     if headers.name.as_str() == "id" {
                         let mut data = field.data.readable().unwrap();
-                        let mut buffer = String::new();
-                        data.read_to_string(&mut buffer);
-                        req.id = buffer;
+                        data.read_to_string(&mut req.id)?;
                     }
                 }
             }
         }
     }
-    return req;
+    return Ok(req);
 }
 
 fn create_new_id(remote_addr: IpAddr, r: &mut UploadRequest) {
@@ -56,18 +54,20 @@ fn create_new_id(remote_addr: IpAddr, r: &mut UploadRequest) {
     r.new_id = true;
 }
 
-pub fn parse_request(remote_addr: IpAddr, entries: Entries) -> UploadRequest {
-    let mut req = parse_data(entries);
+pub fn parse_request(remote_addr: IpAddr, entries: Entries) -> Result<UploadRequest, Box<Error>> {
+    let mut req = parse_data(entries)?;
 
     if req.id == "" {
         create_new_id(remote_addr, &mut req);
     }
 
-    return req;
+    return Ok(req);
 }
 
 #[test]
 fn test_new_id() {
+    use std::net::Ipv4Addr;
+
     let localhost_v4 = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
     let mut r = UploadRequest {
         id: String::new(),

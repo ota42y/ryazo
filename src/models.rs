@@ -1,5 +1,5 @@
-extern crate diesel;
 extern crate chrono;
+extern crate diesel;
 
 use self::chrono::NaiveDateTime;
 
@@ -9,4 +9,3 @@ pub struct Item {
     pub request_id: String,
     pub created_at: NaiveDateTime,
 }
-

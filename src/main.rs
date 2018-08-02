@@ -9,14 +9,14 @@ extern crate env_logger;
 mod image_store;
 mod post_parser;
 
+use image_store::ImageStore;
 use iron::prelude::*;
 use iron::status;
 use mount::Mount;
-use multipart::mock::StdoutTee;
 use multipart::server::{Entries, Multipart, SaveResult};
-use self::post_parser::UploadRequest;
 use staticfile::Static;
 use std::env;
+use std::error::Error;
 use std::io::Write;
 use std::net::IpAddr;
 use std::path::Path;
@@ -56,28 +56,41 @@ fn process_request(request: &mut Request) -> IronResult<Response> {
             status::BadRequest,
             "The request is not multipart",
         ))),
- qq   }
+    }
 }
 
 fn process_entries(remote_addr: IpAddr, entries: Entries) -> IronResult<Response> {
-    let mut req = post_parser::parse_request(remote_addr, entries);
+    let req = match post_parser::parse_request(remote_addr, entries) {
+        Err(e) => return Ok(error_response(e)),
+        Ok(d) => d,
+    };
 
-    let data = make_response(&req);
+    let data = match make_response(&req) {
+        Err(e) => return Ok(error_response(e)),
+        Ok(d) => d,
+    };
+
     let mut resp = Response::with((status::Ok, data));
-    resp.headers
-        .append_raw("X-Gyazo-Id", req.id.as_bytes().to_vec());
+    if req.new_id {
+        resp.headers
+            .append_raw("X-Gyazo-Id", req.id.as_bytes().to_vec());
+    }
 
     Ok(resp)
 }
 
-fn make_response(req: &post_parser::UploadRequest) -> Vec<u8> {
-    let folder = env::var("SAVE_FOLDER").unwrap().to_string();
-    let filename = image_store::store_image(&req, &folder);
+fn error_response(e: Box<Error>) -> Response {
+    Response::with((status::BadRequest, format!("error reading request: {}", e)))
+}
+
+fn make_response(req: &post_parser::UploadRequest) -> Result<Vec<u8>, Box<Error>> {
+    let store = ImageStore::new();
+    let filename = store.store_image(&req)?;
 
     let server_addr = env::var("SERVER_ADDRESS").unwrap().to_string();
 
     let mut data = Vec::new();
     let _ = writeln!(data, "http://{}/{}", server_addr, filename);
 
-    return data;
+    return Ok(data);
 }

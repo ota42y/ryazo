@@ -76,6 +76,13 @@ fn process_entries(remote_addr: IpAddr, entries: Entries) -> IronResult<Response
             .append_raw("X-Gyazo-Id", req.id.as_bytes().to_vec());
     }
 
+     match env::var("CROSS_ORIGIN") {
+         Ok(origin) => {
+             resp.headers.append_raw("Access-Control-Allow-Origin", origin.as_bytes().to_vec());
+         },
+         Err(_e) => {}, // nothing
+     }
+
     Ok(resp)
 }
 

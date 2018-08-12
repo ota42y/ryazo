@@ -3,3 +3,4 @@
 data/
 ryazo.db
 ryazo_test.db
+dockerfiles/.env.dev
